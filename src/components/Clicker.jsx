@@ -1,9 +1,19 @@
 import React from "react";
-export default function App() {
-    
+import useGameStore from "../store/gameStore";
+import useUpgradeStore from "../store/upgradeStore";
 
+
+export default function Clicker() {
+    
+    const coins = useGameStore(state => state.coins);
+    const increaseCoins = useGameStore(state => state.increaseCoins);
+    const powerNow = useUpgradeStore(state => state.powerNow);
 
     return(
-        <h1>Click the button!</h1>
+        <div>
+            <h1>Кликай на кнопку!</h1>
+            <h3>Текущая сила ({powerNow})</h3>
+            <button onClick={increaseCoins}>Клик!</button>
+        </div>
     );
 }
