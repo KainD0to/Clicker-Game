@@ -14,7 +14,7 @@ export default function Stats() {
         <div>
             <h1>Статистика</h1>
             <h3>Всего кликов ({clicks})</h3>
-            <h3>Количество монет ({totalCoins})</h3>
+            <h3>Всего монет ({totalCoins})</h3>
             <h3>Текущая сила ({powerNow})</h3>
         </div>
     );

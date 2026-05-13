@@ -12,6 +12,7 @@ export default function Clicker() {
     return(
         <div>
             <h1>Кликай на кнопку!</h1>
+            <p>Монеты: {coins}</p>
             <h3>Текущая сила ({powerNow})</h3>
             <button onClick={increaseCoins}>Клик!</button>
         </div>

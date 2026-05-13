@@ -2,23 +2,23 @@ import { create } from 'zustand';
 import useUpgradeStore from './upgradeStore';
 import useItemsStore from './itemsStore';
 import useInventoryStore from './inventoryStore';
-import { useState } from 'react';
 
 const savedCoins = JSON.parse(localStorage.getItem('coins')) || 0;
 const savedTotalCoins = JSON.parse(localStorage.getItem('totalCoins')) || 0;
 const savedClicks = JSON.parse(localStorage.getItem('clicks')) || 0;
 
-const useMoneyStore = create((set) => ({
+const useGameStore = create((set) => ({
 
     coins: savedCoins,
     totalCoins: savedTotalCoins,
     clicks: savedClicks,
-    items: () => get((state) => ({items: useItemsStore.items})),
+    playerItems: useItemsStore.getState().items,
 
     increaseCoins: () => {
+        console.log('increaseCoins вызван!');
         const powerNow = useUpgradeStore.getState().powerNow;
         const droppedItems = useItemsStore.getState().getChances();
-    
+        
         if (droppedItems.length > 0) {
             console.log('Выпало:', droppedItems);
             droppedItems.forEach(item => {
@@ -31,12 +31,22 @@ const useMoneyStore = create((set) => ({
             const newTotalCoins = state.totalCoins + powerNow;
             const newClicks = state.clicks + 1;
             
-            useUpgradeStore.getState().updateIsAvailable(newCoins, state.items || {});
+            // ✅ Собираем предметы из слотов инвентаря
+            const slots = useInventoryStore.getState().slots;
+            const items = {};
+            slots
+                .filter(s => !s.isFree)
+                .forEach(s => {
+                    items[s.itemHere] = (items[s.itemHere] || 0) + s.quantity;
+                });
+            
+            // ✅ Передаём актуальные предметы
+            useUpgradeStore.getState().updateIsAvailable(newCoins, items);
             
             localStorage.setItem('coins', JSON.stringify(newCoins));
             localStorage.setItem('totalCoins', JSON.stringify(newTotalCoins));
             localStorage.setItem('clicks', JSON.stringify(newClicks));
-
+            
             return { 
                 coins: newCoins,
                 totalCoins: newTotalCoins,
@@ -51,4 +61,4 @@ const useMoneyStore = create((set) => ({
     },
 }));
 
-export default useMoneyStore;
+export default useGameStore;

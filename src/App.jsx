@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Clicker from './components/Clicker';
 import Stats from './components/Stats';
 import Upgrades from './components/Upgrades';
+import Inventory from './components/Inventory';
 
 function App() {
     const [currentPage, setCurrentPage] = useState('clicker');
@@ -27,12 +28,18 @@ function App() {
                 >
                     Улучшения
                 </button>
+                <button
+                    onClick={() => setCurrentPage('inventory')}
+                >
+                    Инвентарь
+                </button>
             </div>
 
         <div>
             {currentPage === 'clicker' && <Clicker />}
             {currentPage === 'stats' && <Stats />}
             {currentPage === 'upgrades' && <Upgrades />}
+            {currentPage === 'inventory' && <Inventory />}
         </div>
         </div>
     );

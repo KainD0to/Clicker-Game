@@ -15,7 +15,7 @@ const useUpgradeStore = create((set, get) => ({
             },
             purchased: false,
             isAvailable: false,
-            power: 1,
+            power: 2,
             upgradeLvl: 1,
         },
         {
@@ -27,7 +27,7 @@ const useUpgradeStore = create((set, get) => ({
             },
             purchased: false,
             isAvailable: false,
-            power: 2,
+            power: 3,
             upgradeLvl: 2,
         },
         {
@@ -39,7 +39,7 @@ const useUpgradeStore = create((set, get) => ({
             },
             purchased: false,
             isAvailable: false,
-            power: 2,
+            power: 4,
             upgradeLvl: 2,
         }
     ],
@@ -68,6 +68,7 @@ const useUpgradeStore = create((set, get) => ({
     buyUpgrade: (upgradeId) => {
         const state = get();
         const upgrade = state.upgrades.find(u => u.id === upgradeId);
+        const gameState = useGameStore.getState();
         const inventoryState = useInventoryStore.getState();
 
         if (!upgrade || upgrade.purchased || !upgrade.isAvailable) {
@@ -75,8 +76,13 @@ const useUpgradeStore = create((set, get) => ({
         }
 
         const hasEnoughCoins = inventoryState.coins >= upgrade.cost.coins;
-        const hasEnoughItems = Object.entries(upgrade.cost.items).every(
-            ([itemName, amount]) => (inventoryState.items[itemName] || 0) >= amount
+        const hasEnoughItems = !upgrade.cost.items || Object.entries(upgrade.cost.items).every(
+            ([itemName, amount]) => {
+                const totalInSlots = inventoryState.slots
+                    .filter(s => !s.isFree && s.itemHere === itemName)
+                    .reduce((sum, s) => sum + s.quantity, 0);
+                return totalInSlots >= amount;
+            }
         );
 
         set((state) => ({
@@ -89,15 +95,26 @@ const useUpgradeStore = create((set, get) => ({
             upgradeLvlNow: state.upgradeLvlNow + 1,
         }));
 
-        const newItems = { ...inventoryState.items };
-        Object.entries(upgrade.cost.items).forEach(([itemName, amount]) => {
-            newItems[itemName] -= amount;
+        useGameStore.setState({ coins: gameState.coins - upgrade.cost.coins });
+
+    // Списываем предметы из слотов
+    if (upgrade.cost.items) {
+        let toRemove = { ...upgrade.cost.items };
+        
+        const updatedSlots = inventoryState.slots.map(slot => {
+            if (slot.isFree || !toRemove[slot.itemHere]) return slot;
+            
+            const toTake = Math.min(slot.quantity, toRemove[slot.itemHere]);
+            toRemove[slot.itemHere] -= toTake;
+            
+            if (slot.quantity - toTake <= 0) {
+                return { ...slot, isFree: true, itemHere: null, quantity: 0 };
+            }
+            return { ...slot, quantity: slot.quantity - toTake };
         });
 
-        useInventoryStore.setState({
-            coins: inventoryState.coins - upgrade.cost.coins,
-            items: newItems
-        });
+        useInventoryStore.setState({ slots: updatedSlots });
+    }
 
         return true;
     }

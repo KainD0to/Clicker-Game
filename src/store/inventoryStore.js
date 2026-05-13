@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import useGameStore from './gameStore';
+import useUpgradeStore from './upgradeStore';
+
 
 const useInventoryStore = create((set, get) => ({
     slots: [
@@ -44,6 +47,7 @@ const useInventoryStore = create((set, get) => ({
                         : slot
                 )
             }));
+            updateUpgradeAvailability();
             return true;
         }
 
@@ -65,8 +69,23 @@ const useInventoryStore = create((set, get) => ({
             ),
         }));
 
+        updateUpgradeAvailability();
         return true;
-    }
+    },
 }));
+
+function updateUpgradeAvailability() {
+    const gameState = useGameStore.getState();
+    const slots = useInventoryStore.getState().slots;
+    
+    const items = {};
+    slots
+        .filter(s => !s.isFree)
+        .forEach(s => {
+            items[s.itemHere] = (items[s.itemHere] || 0) + s.quantity;
+        });
+    
+    useUpgradeStore.getState().updateIsAvailable(gameState.coins, items);
+}
 
 export default useInventoryStore;
